@@ -6,21 +6,19 @@ enum Mnemonic {
     PEEK, PUSH, POP,
     DUP,
     SWAP,
+    DROP,
+    RET,
 
     ADD, SUM,
     MUL, PROD,
     DIV, MOD,
     SQRT,
 
-    BEQ,
-    BNEQ,
+    BEQ, BNEQ,
+    BGT, BGE,
+    BLT, BLE,
 
-    BEZ,
-    BNEZ,
-    BGT,
-    BGE,
-    BLT,
-    BLE,
+    BEZ, BNEZ,
 
     JMP;
 

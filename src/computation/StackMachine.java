@@ -5,49 +5,87 @@ import util.StringUtil;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class StackMachine {
     private final ListStack<BigDecimal> stack = new ListStack<>();
     private final String[] program;
-    int programCounter = 1;
+    private final HashMap<String, Integer> labels = new HashMap<>();
+    int programCounter = 0;
 
     public StackMachine(String[] program) {
         this.program = program;
+        for (int i = 0; i < program.length; i++) {
+            String line = program[i];
+            if (line.length() == 0)
+                continue;
+            if (line.charAt(0) == ':') {
+                if (labels.put(line.substring(1), i) != null)
+                    throw new IllegalArgumentException("[SYNTAX] Duplicate label: " + line.substring(1)
+                            + " (Line: " + (i + 1) + ")");
+            }
+        }
     }
 
     public void execute() {
-        while (programCounter < program.length + 1) {
-            String line = program[(programCounter++) - 1];
+        while (true) {
+            String line;
+            try {
+                line = program[(programCounter++)];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                throw new UnsupportedOperationException("[SYNTAX] missing RET statement! (Line: " + programCounter + ")");
+            }
             if (line.length() == 0)
                 continue;
             String[] tokens = StringUtil.tokenize(line);
-            action(tokens);
+            if (!action(tokens))
+                break;
         }
 
-        int restElements = 0;
-        while (stack.pop() != null)
-            restElements++;
+        ArrayList<BigDecimal> remaining = new ArrayList<>();
+        while (stack.peek() != null)
+            remaining.add(stack.pop());
 
-        System.out.println("Remaining stack elements on finish: " + restElements);
+        System.out.println("Remaining stack elements on finish: TOP -> " + remaining);
     }
 
-    private void action(String[] args) {
+    @SuppressWarnings("ConstantConditions") // "Argument 'arg' might be null"
+    private boolean action(String[] args) {
+        if (args[0].charAt(0) == ':') // Label
+            return true;
+        if (args[0].charAt(0) == '#') // Comment
+            return true;
+
         Mnemonic mnemonic;
         try {
             mnemonic = Mnemonic.parseMnemonic(args[0]);
         } catch (IllegalArgumentException e) {
-            System.out.println("Mnemonic \"" + args[0] + "\" is not valid!");
-            return;
+            throw new UnsupportedOperationException("[SYNTAX]" +
+                    "Mnemonic \"" + args[0] + "\" is not known! (Line: " + programCounter + ")");
         }
 
-        BigDecimal arg = null;
+        String arg = null;
         if (args.length > 1)
-            arg = new BigDecimal(args[1]);
+            arg = args[1];
 
         switch (mnemonic) {
-            case PUSH -> stack.push(arg);
-            case PEEK -> System.out.println("PEEK: " + stack.peek());
-            case POP -> System.out.println("POP: " + stack.pop());
+
+            // Stack operations
+
+            case PUSH -> stack.push(new BigDecimal(arg));
+            case PEEK -> {
+                if (arg == null)
+                    System.out.println("PEEK: " + stack.peek());
+                else
+                    System.out.println("PEEK [" + arg + "]: " + stack.peek());
+            }
+            case POP -> {
+                if (arg == null)
+                    System.out.println("POP: " + stack.pop());
+                else
+                    System.out.println("POP [" + arg + "]: " + stack.pop());
+            }
             case DUP -> stack.push(stack.peek());
             case SWAP -> {
                 BigDecimal top = stack.pop();
@@ -55,6 +93,13 @@ public class StackMachine {
                 stack.push(top);
                 stack.push(lower);
             }
+            case DROP -> stack.pop();
+            case RET -> {
+                return false;
+            }
+
+            // Arithmetic operations
+
             case ADD -> stack.push(stack.pop().add(stack.pop()));
             case SUM -> {
                 BigDecimal sum = BigDecimal.ZERO;
@@ -85,51 +130,70 @@ public class StackMachine {
             }
             case SQRT -> stack.push(stack.pop().sqrt(MathContext.DECIMAL128));
 
+            // Jump operations
+
             case BEQ -> {
                 BigDecimal top = stack.pop();
-                if (stack.peek().compareTo(top) == 0)
-                    programCounter = arg.toBigInteger().intValue();
+                if (stack.pop().compareTo(top) == 0)
+                    updateProgramCounter(arg);
             }
-
             case BNEQ -> {
                 BigDecimal top = stack.pop();
-                if (stack.peek().compareTo(top) != 0)
-                    programCounter = arg.toBigInteger().intValue();
-            }
-
-            case BEZ -> {
-                if (stack.peek().compareTo(BigDecimal.ZERO) == 0)
-                    programCounter = arg.toBigInteger().intValue();
-            }
-            case BNEZ -> {
-                if (stack.peek().compareTo(BigDecimal.ZERO) != 0)
-                    programCounter = arg.toBigInteger().intValue();
+                if (stack.pop().compareTo(top) != 0)
+                    updateProgramCounter(arg);
             }
             case BGT -> {
                 BigDecimal top = stack.pop();
-                if (stack.peek().compareTo(top) > 0)
-                    programCounter = arg.toBigInteger().intValue();
+                if (stack.pop().compareTo(top) > 0)
+                    updateProgramCounter(arg);
             }
-
             case BGE -> {
                 BigDecimal top = stack.pop();
-                if (stack.peek().compareTo(top) >= 0)
-                    programCounter = arg.toBigInteger().intValue();
+                if (stack.pop().compareTo(top) >= 0)
+                    updateProgramCounter(arg);
             }
-
             case BLT -> {
                 BigDecimal top = stack.pop();
-                if (stack.peek().compareTo(top) < 0)
-                    programCounter = arg.toBigInteger().intValue();
+                if (stack.pop().compareTo(top) < 0)
+                    updateProgramCounter(arg);
             }
-
             case BLE -> {
                 BigDecimal top = stack.pop();
-                if (stack.peek().compareTo(top) <= 0)
-                    programCounter = arg.toBigInteger().intValue();
+                if (stack.pop().compareTo(top) <= 0)
+                    updateProgramCounter(arg);
             }
-
-            case JMP -> programCounter = arg.toBigInteger().intValue();
+            case BEZ -> {
+                if (stack.pop().compareTo(BigDecimal.ZERO) == 0)
+                    updateProgramCounter(arg);
+            }
+            case BNEZ -> {
+                if (stack.pop().compareTo(BigDecimal.ZERO) != 0)
+                    updateProgramCounter(arg);
+            }
+            case JMP -> updateProgramCounter(arg);
         }
+
+        return true;
+    }
+
+    private void updateProgramCounter(String arg) {
+        if (arg.charAt(0) == '=') {
+            try {
+                programCounter = Integer.parseInt(arg.substring(1)) - 1;
+                System.out.println("[WARNING] (conditional) jump based on line number! (Line: " + programCounter + ")");
+                return;
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("[SYNTAX]" +
+                        " \"" + arg + "\" is not a valid line number! (Line: " + programCounter + ")");
+            }
+        }
+
+        if (arg.charAt(0) == '>') {
+            programCounter = labels.get(arg.substring(1));
+            return;
+        }
+
+        throw new IllegalArgumentException("[SYNTAX]"
+                + " Cannot jump to \"" + arg + "\" (Line: " + programCounter + ")");
     }
 }
