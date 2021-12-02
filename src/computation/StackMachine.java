@@ -39,8 +39,12 @@ public class StackMachine {
             if (line.length() == 0)
                 continue;
             String[] tokens = StringUtil.tokenize(line);
-            if (!action(tokens))
-                break;
+            try {
+                if (!action(tokens))
+                    break;
+            } catch (NullPointerException e) {
+                throw new IllegalArgumentException("[SYNTAX] Error in line " + programCounter);
+            }
         }
 
         ArrayList<BigDecimal> remaining = new ArrayList<>();
