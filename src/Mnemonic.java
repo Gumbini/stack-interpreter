@@ -7,8 +7,20 @@ public enum Mnemonic {
 
     ADD, SUM,
     MUL, PROD,
-    DIV,
-    SQRT;
+    DIV, MOD,
+    SQRT,
+
+    BEQ,
+    BNEQ,
+
+    BEZ,
+    BNEZ,
+    BGT,
+    BGE,
+    BLT,
+    BLE,
+
+    JMP;
 
     /**
      * Case-insensitive variant of {@link #valueOf(String)}

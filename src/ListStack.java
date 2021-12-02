@@ -6,7 +6,7 @@ public class ListStack<E> {
     }
 
     E peek() {
-        return headPointer.element;
+        return (headPointer == null) ? null : headPointer.element;
     }
 
     E pop() {
