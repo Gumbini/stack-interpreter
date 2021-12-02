@@ -1,6 +1,8 @@
+package computation;
+
 import java.util.Locale;
 
-public enum Mnemonic {
+enum Mnemonic {
     PEEK, PUSH, POP,
     DUP,
     SWAP,

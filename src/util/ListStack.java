@@ -1,3 +1,5 @@
+package util;
+
 public class ListStack<E> {
     private StackLayer<E> headPointer;
 
@@ -5,11 +7,11 @@ public class ListStack<E> {
         headPointer = null;
     }
 
-    E peek() {
+    public E peek() {
         return (headPointer == null) ? null : headPointer.element;
     }
 
-    E pop() {
+    public E pop() {
         StackLayer<E> oldHead = headPointer;
         if (oldHead == null)
             return null;
@@ -18,7 +20,7 @@ public class ListStack<E> {
 
     }
 
-    void push(E e) {
+    public void push(E e) {
         headPointer = new StackLayer<>(e, headPointer);
     }
 

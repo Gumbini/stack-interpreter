@@ -1,20 +1,23 @@
-import java.io.*;
+package computation;
+
+import util.ListStack;
+import util.StringUtil;
+
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.util.ArrayList;
 
-public class Main {
-    private static final ListStack<BigDecimal> stack = new ListStack<>();
-    private static int programCounter = 1;
+public class StackMachine {
+    private final ListStack<BigDecimal> stack = new ListStack<>();
+    private final String[] program;
+    int programCounter = 1;
 
-    public static void main(String[] args) throws IOException {
-        if (args.length == 0)
-            throw new IllegalArgumentException("Please specify a path! (e.g. \".\")");
+    public StackMachine(String[] program) {
+        this.program = program;
+    }
 
-        String[] file = parseFile(new File(args[0]));
-
-        while (programCounter < file.length + 1) {
-            String line = file[(programCounter++) - 1];
+    public void execute() {
+        while (programCounter < program.length + 1) {
+            String line = program[(programCounter++) - 1];
             if (line.length() == 0)
                 continue;
             String[] tokens = StringUtil.tokenize(line);
@@ -25,24 +28,10 @@ public class Main {
         while (stack.pop() != null)
             restElements++;
 
-        System.out.println("Remaining stack elements on exit: " + restElements);
+        System.out.println("Remaining stack elements on finish: " + restElements);
     }
 
-    private static String[] parseFile(File file) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        ArrayList<String> stringList = new ArrayList<>();
-
-        String line;
-        while ((line = reader.readLine()) != null)
-            stringList.add(line);
-
-        reader.close();
-
-        return stringList.toArray(new String[0]);
-    }
-
-
-    private static void action(String[] args) {
+    private void action(String[] args) {
         Mnemonic mnemonic;
         try {
             mnemonic = Mnemonic.parseMnemonic(args[0]);
