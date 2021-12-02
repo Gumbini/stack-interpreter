@@ -183,8 +183,9 @@ public class StackMachine {
     private void updateProgramCounter(String arg) {
         if (arg.charAt(0) == '=') {
             try {
-                programCounter = Integer.parseInt(arg.substring(1)) - 1;
+                int line = Integer.parseInt(arg.substring(1)) - 1;
                 System.out.println("[WARNING] (conditional) jump based on line number! (Line: " + programCounter + ")");
+                programCounter = line;
                 return;
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("[SYNTAX]" +
