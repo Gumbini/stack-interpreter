@@ -30,7 +30,7 @@ Run the Java compiler:
     
 Run the JAR archiver:
 
-    cd classes && jar --verbose --create --main-class=main.Main --file ../StackInterpreter.jar *
+    (cd classes && jar --verbose --create --main-class=main.Main --file ../StackInterpreter.jar *)
 
 
 Usage
@@ -118,11 +118,11 @@ mod
 peek   "Rest"
 push   1
 beq    >end
-call   >Lsub
+call   >Rsub
 jmp    >Lcond0
 
 
-:Lsub                 # top -= 1;
+:Rsub                 # top -= 1;
 push   0.5
 dup
 add
