@@ -7,9 +7,10 @@ enum Mnemonic {
     DUP,
     SWAP,
     DROP,
-    RET,
+    CALL, RET,
 
     ADD, SUM,
+    SUB,
     MUL, PROD,
     DIV, MOD,
     SQRT,

@@ -52,15 +52,17 @@ Mnemonic | Arguments | Description
 **DUP**  | -                           | Duplicate the most recently added value.
 **SWAP** | -                           | Change the order of the top two elements on the stack.
 **DROP** | -                           | Same as **POP**, but silent.
-**RET**  | -                           | End execution of the program and print remaining stack elements to the console.
+**CALL** | *\<label \| line number\>*  | Call a subroutine.
+**RET**  | -                           | End execution of the current subroutine and return to the previous one.
+|        |                             | If the program is returning from *:main* the remaining stack elements will be printed to the console.
 |        |                             |
 **ADD**  | -                           | Add the top two elements on the stack and push the result back.
-|        |                             | *Subtraction is realized by pushing the negative equivalent on the stack or multiplying with -1.*
+**SUB**  | -                           | Subtract the top element from the second one and push the result back.
 **SUM**  | -                           | Sum up all elements on the stack. After this operation there is exactly one element left holding the result.
 **MUL**  | -                           | Multiply the top two elements on the stack and push the result back.
 **PROD** | -                           | Multiply all elements on the stack with each other. After this operation there is exactly one element left holding the result.
 **DIV**  | -                           | Divide the second element by the top one and push the result back.
-**MUL**  | -                           | Same as **DIV**, but the rest is pushed back on the stack. *This operation will only work with Integers!*
+**MOD**  | -                           | Same as **DIV**, but the rest is pushed back on the stack. *This operation will only work with Integers!*
 **SQRT** | -                           | Calculate the square root of the topmost element and push it back on the stack.
 |        |                             |
 **BEQ**  | *\<label \| line number\>*  | Branch if the second element is equal to the top one.
@@ -74,55 +76,66 @@ Mnemonic | Arguments | Description
 **JMP**  | *\<label \| line number\>*  | Branch unconditionally.
 |        |                             |
 **:**    | *\<name\>*                  | Create a new Label (Do **not** use whitespace or any other character between ':' and the label name!).
-**#**    | *[comment]*                 | Mark this line as a comment line.
+**#**    | *[comment]*                 | Everything in this line is ignored after this character. Use at least one whitespace after a valid mnemonic (or its argument) to comment a code line.
 
 
 Important
 ---------
 
-**Any branch operation** removes two elements from the stack. Use **DUP** beforehand if you want to keep the result of the previous calculation.
+**Any branch operation** (B...) removes **two** elements from the stack. Use **DUP** beforehand if you want to keep the result of the previous calculation.
 
-Branch to labels using ">label_name" and to absolute line numbers using "=number".
+Branch to a label using ">label_name" and to an absolute line number using "=number".
 
-Execution starts at the first line, the ":main" label is not necessary but is considered good practice.
+Execution starts at the "*:main*" label.
 
 
 Example program
 ---------------
 
-test.si
+Subtract 1 from the starting value 24 as long as the remainder of the division by 3 is not equal to 1.
+
+Pseudo code:
 
 ```
-:main
-push  21
-jmp   >Lcond0
+void main() {
+    int top = 24;
+    while (top % 3 != 1) {
+        top -= 1;
+    }
+    print(top);
+    return;
+}
+```
 
+Equivalent (demo) code for the stack interpreter:
 
-# End program if (top % 3 == 0)
-:Lcond1
+```
+:Lcond0               # if (top % 3 == 1) return;
 dup
-push  3
+peek   Value
+push   3 
 mod
-peek  "Condition 1"
-bez   >end
+peek   "Rest"
+push   1
+beq    >end
+call   >Lsub
+jmp    >Lcond0
 
 
-# Subtract one
-:Lsub
-push  -0.5
+:Lsub                 # top -= 1;
+push   0.5
 dup
-sum
-peek  Subtraction
-jmp   >Lcond1
+add
+push   -1
+mul
+add
+ret
 
 
-# End program if (top < 5)
-:Lcond0
-peek  "Condition 0"
-dup
-push  5
-# Jump to line 15 aka "Lsub" (not recommended)
-bge   =15
+:main
+push   24
+jmp    >Lcond0
+
 
 :end
 ret
@@ -133,14 +146,12 @@ Example output
 --------------
 
 ```
-$ java -jar StackInterpreter.jar  test.si
-PEEK [Condition 0]: 21
-[WARNING] (conditional) jump based on line number! (Line: 30)
-PEEK [Subtraction]: 20.0
-PEEK [Condition 1]: 2
-PEEK [Subtraction]: 19.0
-PEEK [Condition 1]: 1
-PEEK [Subtraction]: 18.0
-PEEK [Condition 1]: 0
-Remaining stack elements on finish: TOP -> [18.0]
+$ java -jar StackInterpreter.jar example.si
+PEEK [Value]: 24
+PEEK [Rest]: 0
+PEEK [Value]: 23.0
+PEEK [Rest]: 2
+PEEK [Value]: 22.0
+PEEK [Rest]: 1
+Remaining stack elements on finish: TOP -> [22.0]
 ```

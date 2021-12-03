@@ -1,6 +1,6 @@
 package main;
 
-import computation.StackMachine;
+import computation.StackInterpreter;
 import util.FileUtil;
 
 import java.io.File;
@@ -14,6 +14,6 @@ public class Main {
 
         String[] lines = FileUtil.parseFile(new File(args[0]));
 
-        new StackMachine(lines).execute();
+        new StackInterpreter(lines).execute();
     }
 }
