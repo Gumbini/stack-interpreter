@@ -1,5 +1,5 @@
 # Stack Interpreter
-A simple runtime stack-assembly interpreter and calculator
+A simple runtime assembly interpreter and calculator
 
 
 Build
@@ -41,7 +41,9 @@ Usage
 Mnemonics
 ---------
 
-Lower case is possible.
+The stack interpreter interprets its own language at runtime. It is basically assembly language for a stack architecture hence the name "Stack Interpreter".
+
+The following commands are supported:
 
 Mnemonic | Arguments | Description
 :------: | :-------: | :----------
@@ -78,13 +80,16 @@ Mnemonic | Arguments | Description
 **:**    | *\<name\>*                  | Create a new Label (Do **not** use whitespace or any other character between ':' and the label name!).
 **#**    | *[comment]*                 | Everything in this line is ignored after this character. Use at least one whitespace after a valid mnemonic (or its argument) to comment a code line.
 
-
 Important
 ---------
 
 **Any branch operation** (B...) removes **two** elements from the stack. Use **DUP** beforehand if you want to keep the result of the previous calculation.
 
+Mnemonics are case-insensitive.
+
 Branch to a label using ">label_name" and to an absolute line number using "=number".
+
+You can use quotation marks after **PEAK** or **POP** to output multiple words separated by whitespace.
 
 Execution starts at the "*:main*" label.
 
@@ -96,33 +101,44 @@ Subtract 1 from the starting value 24 as long as the remainder of the division b
 
 Pseudo code:
 
-```
+```c
 void main() {
-    int top = 24;
-    while (top % 3 != 1) {
-        top -= 1;
+    Real value = 24;
+    Real rest;
+    
+    while(true) {
+        println("Value", value);
+        rest = value % 3;
+        println("Rest", rest);
+        
+        if (rest == 1) {
+            break;
+        }
+        
+        value -= 1;
     }
-    print(top);
+    
+    dumpStack();
     return;
 }
 ```
 
 Equivalent (demo) code for the stack interpreter:
 
-```
-:Lcond0               # if (top % 3 == 1) return;
+```asm
+:Lcond0               # if (rest == 1) break;
 dup
 peek   Value
 push   3 
 mod
-peek   "Rest"
+peek   Rest
 push   1
 beq    >end
 call   >Rsub
 jmp    >Lcond0
 
 
-:Rsub                 # top -= 1;
+:Rsub                 # value -= 1;
 push   0.5
 dup
 add

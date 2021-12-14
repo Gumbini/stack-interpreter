@@ -1,0 +1,29 @@
+:Lcond0               # if (rest == 1) break;
+dup
+peek   Value
+push   3 
+mod
+peek   Rest
+push   1
+beq    >end
+call   >Rsub
+jmp    >Lcond0
+
+
+:Rsub                 # value -= 1;
+push   0.5
+dup
+add
+push   -1
+mul
+add
+ret
+
+
+:main
+push   24
+jmp    >Lcond0
+
+
+:end
+ret
